@@ -20,4 +20,5 @@
     Scripts 选 dev
     保存后点击绿色运行按钮即可
 
-后端代码：D:\pyCharmProjects\workSpace03
+java后端代码：D:\ideaProjects\workSpace03
+python后端代码：D:\pyCharmProjects\workSpace03
