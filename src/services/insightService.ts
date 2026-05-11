@@ -1,16 +1,11 @@
-import axios from "axios";
+import { http } from "./http";
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8002",
-  timeout: 10000
-});
-
-export const askData = async (employeeId: string, question: string) => {
-  const { data } = await api.post("/api/v1/query/ask", { employeeId, question });
+export const askData = async (question: string) => {
+  const { data } = await http.post("/api/v1/query/ask", { question });
   return data;
 };
 
-export const askKnowledge = async (employeeId: string, question: string) => {
-  const { data } = await api.post("/api/v1/knowledge/ask", { employeeId, question });
+export const askKnowledge = async (question: string) => {
+  const { data } = await http.post("/api/v1/knowledge/ask", { question });
   return data;
 };

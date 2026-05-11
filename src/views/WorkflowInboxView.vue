@@ -1,5 +1,12 @@
 <template>
   <div class="page">
+    <el-alert
+      :title="`当前审批人：${authStore.user?.displayName || '-'}（${authStore.user?.employeeId || '-'}）`"
+      type="info"
+      :closable="false"
+      show-icon
+      class="feedback"
+    />
     <el-table :data="rows" border stripe>
       <el-table-column prop="workflowId" label="流程ID" min-width="180" />
       <el-table-column prop="type" label="类型" width="120" />
@@ -23,7 +30,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { approveWorkflow } from "../services/workflowService";
+import { useAuthStore } from "../stores/authStore";
 
+const authStore = useAuthStore();
 const message = ref("");
 const messageType = ref<"success" | "error">("success");
 
@@ -34,7 +43,7 @@ const rows = ref([
 
 const approve = async (workflowId: string) => {
   try {
-    const data = await approveWorkflow(workflowId, "approver-001");
+    const data = await approveWorkflow(workflowId);
     const target = rows.value.find((row) => row.workflowId === workflowId);
     if (target) target.status = data.status;
     messageType.value = "success";

@@ -1,5 +1,12 @@
 <template>
   <div class="page">
+    <el-alert
+      :title="`当前会话身份：${authStore.user?.displayName || '-'}（${authStore.user?.employeeId || '-'}）`"
+      type="info"
+      show-icon
+      :closable="false"
+      class="status"
+    />
     <el-row :gutter="12">
       <el-col :span="16">
         <el-card shadow="never">
@@ -47,8 +54,10 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useAuthStore } from "../stores/authStore";
 import { useChatStore } from "../stores/chatStore";
 
+const authStore = useAuthStore();
 const store = useChatStore();
 const text = ref("");
 const error = ref("");

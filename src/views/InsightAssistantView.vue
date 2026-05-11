@@ -38,8 +38,8 @@ const submit = async () => {
   loading.value = true;
   try {
     const data = activeTab.value === "data"
-      ? await askData("employee-001", question.value)
-      : await askKnowledge("employee-001", question.value);
+      ? await askData(question.value)
+      : await askKnowledge(question.value);
     result.value = JSON.stringify(data, null, 2);
   } catch (e: any) {
     result.value = `查询失败: ${e?.message || "未知错误"}`;

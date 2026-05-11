@@ -1,8 +1,8 @@
 <template>
   <div class="page">
     <el-form inline>
-      <el-form-item label="员工ID">
-        <el-input v-model="employeeId" placeholder="employee-001" style="width: 180px" />
+      <el-form-item label="当前员工">
+        <el-input :model-value="authStore.user?.displayName || '-'" disabled style="width: 180px" />
       </el-form-item>
       <el-form-item label="月份">
         <el-input v-model="month" placeholder="YYYY-MM" style="width: 140px" />
@@ -51,8 +51,9 @@
 <script setup lang="ts">
 import { reactive, ref } from "vue";
 import { clockIn, monthlySummary } from "../services/attendanceService";
+import { useAuthStore } from "../stores/authStore";
 
-const employeeId = ref("employee-001");
+const authStore = useAuthStore();
 const month = ref(new Date().toISOString().slice(0, 7));
 const error = ref("");
 const clockInResult = reactive<Record<string, string>>({});
@@ -63,7 +64,7 @@ const doClockIn = async () => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const now = new Date().toTimeString().slice(0, 8);
-    const data = await clockIn(employeeId.value, today, now);
+    const data = await clockIn(today, now);
     Object.assign(clockInResult, data);
   } catch (e: any) {
     error.value = e?.message || "打卡失败";
@@ -73,7 +74,7 @@ const doClockIn = async () => {
 const loadSummary = async () => {
   error.value = "";
   try {
-    const data = await monthlySummary(employeeId.value, month.value);
+    const data = await monthlySummary(month.value);
     Object.assign(summary, data);
   } catch (e: any) {
     error.value = e?.message || "汇总查询失败";
