@@ -36,8 +36,38 @@ const router = createRouter({
         {
           path: "workflow",
           name: "workflow",
-          component: () => import("../views/WorkflowInboxView.vue"),
-          meta: { menuKey: "workflow", title: "审批待办" }
+          redirect: "/workflow/create",
+          meta: { menuKey: "workflow", title: "我的流程" }
+        },
+        {
+          path: "workflow/create",
+          name: "workflow-create",
+          component: () => import("../views/workflow/WorkflowCreateView.vue"),
+          meta: { menuKey: "workflow-create", title: "新建流程" }
+        },
+        {
+          path: "workflow/todo",
+          name: "workflow-todo",
+          component: () => import("../views/workflow/WorkflowTodoView.vue"),
+          meta: { menuKey: "workflow-todo", title: "待办事宜" }
+        },
+        {
+          path: "workflow/requests",
+          name: "workflow-requests",
+          component: () => import("../views/workflow/WorkflowRequestsView.vue"),
+          meta: { menuKey: "workflow-requests", title: "我的请求" }
+        },
+        {
+          path: "workflow/monitor",
+          name: "workflow-monitor",
+          component: () => import("../views/workflow/WorkflowMonitorView.vue"),
+          meta: { menuKey: "workflow-monitor", title: "流程监控" }
+        },
+        {
+          path: "workflow/recycle-bin",
+          name: "workflow-recycle",
+          component: () => import("../views/workflow/WorkflowRecycleBinView.vue"),
+          meta: { menuKey: "workflow-recycle", title: "流程回收站" }
         },
         {
           path: "dialog",

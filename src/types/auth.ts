@@ -5,6 +5,7 @@ export interface UserMenu {
   path: string;
   icon: string;
   order: number;
+  children?: UserMenu[];
 }
 
 export interface AuthUser {
@@ -30,6 +31,7 @@ export interface LoginResponse {
   user: AuthUser;
   menus: UserMenu[];
   homePath: string;
+  actionScopes: string[];
 }
 
 export interface CurrentUserResponse {

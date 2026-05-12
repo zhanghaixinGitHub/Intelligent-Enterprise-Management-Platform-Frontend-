@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import type { AuthUser, LoginPayload, UserMenu } from "../types/auth";
 import { getCurrentUserInfo, getUserMenus, login as loginRequest, logout as logoutRequest } from "../services/authService";
 import { clearAuthStorage, getAccessToken, readAuthSnapshot, saveAccessToken, saveAuthSnapshot } from "../utils/auth";
+import { hasMenuKey, normalizeMenuTree, resolveFirstLeafPath } from "../utils/menu";
 
 interface AuthState {
   token: string;
@@ -48,10 +49,13 @@ export const useAuthStore = defineStore("auth", {
   },
   actions: {
     applyAuthResult(payload: { token: string; user: AuthUser; menus: UserMenu[]; homePath: string; actionScopes?: string[]; expiresAt?: string }) {
+      const normalizedMenus = normalizeMenuTree(payload.menus);
+      const resolvedHomePath = payload.homePath || resolveFirstLeafPath(normalizedMenus);
+
       this.token = payload.token;
       this.user = payload.user;
-      this.menus = [...payload.menus].sort((left, right) => left.order - right.order);
-      this.homePath = payload.homePath || "/403";
+      this.menus = normalizedMenus;
+      this.homePath = resolvedHomePath || "/403";
       this.actionScopes = payload.actionScopes || [];
       this.expiresAt = payload.expiresAt || this.expiresAt;
       saveAccessToken(payload.token);
@@ -121,7 +125,7 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     hasMenuPermission(menuKey: string) {
-      return this.menus.some((item) => item.key === menuKey);
+      return hasMenuKey(this.menus, menuKey);
     },
     resetAuth() {
       this.token = "";

@@ -13,10 +13,10 @@
         </p>
 
         <el-space wrap>
-          <el-tag effect="dark">管理员：全量菜单</el-tag>
-          <el-tag effect="plain">人事：看板 + 考勤 + 洞察</el-tag>
-          <el-tag effect="plain">审批经理：看板 + 审批 + 对话 + 洞察</el-tag>
-          <el-tag effect="plain">普通员工：考勤 + 对话 + 洞察</el-tag>
+          <el-tag effect="dark">管理员：全量菜单 + 全流程管理能力</el-tag>
+          <el-tag effect="plain">人事：看板 + 考勤 + 我的流程 + 洞察</el-tag>
+          <el-tag effect="plain">审批经理：看板 + 我的流程 + 对话 + 洞察</el-tag>
+          <el-tag effect="plain">普通员工：考勤 + 我的流程 + 对话 + 洞察</el-tag>
         </el-space>
       </section>
 

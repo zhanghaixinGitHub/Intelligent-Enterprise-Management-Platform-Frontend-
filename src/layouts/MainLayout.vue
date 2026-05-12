@@ -8,17 +8,35 @@
 
       <el-menu
         :default-active="activeMenuPath"
+        :default-openeds="openedMenuKeys"
         class="menu"
         :router="true"
       >
-        <el-menu-item
-          v-for="menu in authStore.menus"
-          :key="menu.key"
-          :index="menu.path"
-        >
-          <el-icon><component :is="resolveIcon(menu.icon)" /></el-icon>
-          <span>{{ menu.title }}</span>
-        </el-menu-item>
+        <template v-for="menu in authStore.menus" :key="menu.key">
+          <el-sub-menu v-if="menu.children?.length" :index="menu.key">
+            <template #title>
+              <el-icon><component :is="resolveIcon(menu.icon)" /></el-icon>
+              <span>{{ menu.title }}</span>
+            </template>
+
+            <el-menu-item
+              v-for="childMenu in menu.children"
+              :key="childMenu.key"
+              :index="childMenu.path"
+            >
+              <el-icon><component :is="resolveIcon(childMenu.icon)" /></el-icon>
+              <span>{{ childMenu.title }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <el-menu-item
+            v-else
+            :index="menu.path"
+          >
+            <el-icon><component :is="resolveIcon(menu.icon)" /></el-icon>
+            <span>{{ menu.title }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
 
@@ -53,9 +71,10 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useRoute, useRouter, RouterView } from "vue-router";
-import { Calendar, ChatDotRound, DataBoard, List, MagicStick } from "@element-plus/icons-vue";
+import { Calendar, ChatDotRound, CirclePlus, DataBoard, DeleteFilled, Document, List, MagicStick, Monitor, Tickets } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { useAuthStore } from "../stores/authStore";
+import { findMenuByKey, findMenuTrailByPath, flattenMenus } from "../utils/menu";
 
 const route = useRoute();
 const router = useRouter();
@@ -64,19 +83,35 @@ const authStore = useAuthStore();
 const iconMap = {
   Calendar,
   ChatDotRound,
+  CirclePlus,
   DataBoard,
+  DeleteFilled,
+  Document,
   List,
-  MagicStick
+  MagicStick,
+  Monitor,
+  Tickets
 };
 
 const resolveIcon = (iconName: string) => iconMap[iconName as keyof typeof iconMap] || DataBoard;
 
+const flattenedMenus = computed(() => flattenMenus(authStore.menus));
+const currentMenuTrail = computed(() => findMenuTrailByPath(authStore.menus, route.path));
+
 const activeMenuPath = computed(() => {
-  return authStore.menus.find((item) => route.path.startsWith(item.path))?.path || authStore.homePath;
+  const matchedMenu = currentMenuTrail.value.at(-1);
+  return matchedMenu?.path || authStore.homePath;
+});
+
+const openedMenuKeys = computed(() => {
+  return currentMenuTrail.value.slice(0, -1).map((item) => item.key);
 });
 
 const currentMenu = computed(() => {
-  return authStore.menus.find((item) => item.key === route.meta.menuKey) || authStore.menus[0];
+  const currentMenuKey = route.meta.menuKey as string | undefined;
+  return (currentMenuKey ? findMenuByKey(authStore.menus, currentMenuKey) : undefined)
+    || currentMenuTrail.value.at(-1)
+    || flattenedMenus.value[0];
 });
 
 const currentTitle = computed(() => currentMenu.value?.title || "企业工作台");
@@ -140,6 +175,32 @@ const handleLogout = async () => {
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.88);
   font-weight: 500;
+}
+
+:deep(.menu .el-sub-menu__title) {
+  margin: 8px 12px;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.88);
+  font-weight: 600;
+}
+
+:deep(.menu .el-sub-menu__title .el-icon),
+:deep(.menu .el-sub-menu__icon-arrow) {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+:deep(.menu .el-sub-menu__title:hover) {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:deep(.menu .el-sub-menu.is-opened > .el-sub-menu__title) {
+  color: #ffffff;
+  background: rgba(64, 158, 255, 0.16);
+}
+
+:deep(.menu .el-menu .el-menu-item) {
+  margin-left: 24px;
 }
 
 :deep(.menu .el-menu-item .el-icon) {
