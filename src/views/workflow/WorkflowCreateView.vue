@@ -25,7 +25,7 @@
 
           <el-alert
             v-if="!canStartProcess"
-            title="当前账号没有 workflow:start 权限，因此只能浏览流程目录，不能发起新流程。"
+            title="当前账号暂未获得流程发起权限：可以浏览流程目录与模板信息，但不能创建新的流程实例。"
             type="warning"
             show-icon
             :closable="false"
@@ -47,8 +47,8 @@
                     <div class="definition-name">{{ definition.name }}</div>
                     <div class="definition-key">{{ definition.key }} / v{{ definition.version }}</div>
                   </div>
-                  <el-tag :type="definition.suspended ? 'danger' : 'success'" effect="plain">
-                    {{ definition.suspended ? '已停用' : '可发起' }}
+                  <el-tag :type="resolveDefinitionTagType(definition)" effect="plain">
+                    {{ resolveDefinitionTagText(definition) }}
                   </el-tag>
                 </div>
               </template>
@@ -67,7 +67,7 @@
                   :disabled="definition.suspended || !canStartProcess"
                   @click="openStartDialog(definition)"
                 >
-                  发起流程
+                  {{ definition.suspended ? '模板已停用' : canStartProcess ? '发起流程' : '无权限发起' }}
                 </el-button>
               </div>
             </el-card>
@@ -209,6 +209,20 @@ const buildDefinitionCategory = (definition: WorkflowProcessDefinitionItem) => {
     return "人事 / 假勤类";
   }
   return "通用业务流程";
+};
+
+const resolveDefinitionTagText = (definition: WorkflowProcessDefinitionItem) => {
+  if (definition.suspended) {
+    return "模板已停用";
+  }
+  return canStartProcess.value ? "当前账号可发起" : "模板可用";
+};
+
+const resolveDefinitionTagType = (definition: WorkflowProcessDefinitionItem) => {
+  if (definition.suspended) {
+    return "danger";
+  }
+  return canStartProcess.value ? "success" : "info";
 };
 
 const loadProcessDefinitions = async () => {

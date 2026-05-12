@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { AxiosRequestConfig } from "axios";
 import { clearAuthStorage, getAccessToken } from "../utils/auth";
+import { pinia } from "../stores";
 
 export interface ExtendedRequestConfig extends AxiosRequestConfig {
   skipAuthStorageClear?: boolean;
@@ -46,9 +47,19 @@ export const http = axios.create({
   timeout: 10000
 });
 
-http.interceptors.request.use((config) => {
-  const accessToken = getAccessToken();
+/*
+  为什么这样改：
+  1. 之前请求拦截器只从 localStorage 读取 access token；
+  2. 一旦某次历史请求触发了 401，全局响应拦截器会清空 localStorage，但页面内 Pinia 仍可能保留当前用户信息，造成“界面看起来已登录、后续请求却不再带 Authorization”的假登录状态；
+  3. 这里优先读取当前内存态 store.token，再回退到 localStorage，确保同一会话中的鉴权请求更加稳健；
+  4. 同时在 401 场景下联动 resetAuth，避免 UI 和请求头状态继续分裂。
+*/
+http.interceptors.request.use(async (config) => {
+  const { useAuthStore } = await import("../stores/authStore");
+  const authStore = useAuthStore(pinia);
+  const accessToken = authStore.token || getAccessToken();
   if (accessToken) {
+    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
@@ -68,6 +79,25 @@ http.interceptors.response.use(
 
     if (error?.response?.status === 401 && !requestConfig?.skipAuthStorageClear) {
       clearAuthStorage();
+
+      void Promise.all([
+        import("../stores/authStore"),
+        import("../router")
+      ]).then(([{ useAuthStore }, { default: router }]) => {
+        const authStore = useAuthStore(pinia);
+        if (authStore.isAuthenticated) {
+          authStore.resetAuth();
+        }
+
+        if (router.currentRoute.value.name !== "login") {
+          void router.replace({
+            name: "login",
+            query: router.currentRoute.value.fullPath && router.currentRoute.value.fullPath !== "/"
+              ? { redirect: router.currentRoute.value.fullPath }
+              : undefined
+          });
+        }
+      });
     }
     return Promise.reject(error);
   }

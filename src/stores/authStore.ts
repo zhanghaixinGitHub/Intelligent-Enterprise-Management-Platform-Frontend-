@@ -74,6 +74,7 @@ export const useAuthStore = defineStore("auth", {
         user: result.user,
         menus: result.menus,
         homePath: result.homePath,
+        actionScopes: result.actionScopes,
         expiresAt: result.expiresAt
       });
       this.initialized = true;
