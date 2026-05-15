@@ -13,7 +13,7 @@
 
       <!-- 筛选条件 -->
       <div class="filter-section">
-        <el-select v-model="filterStatus" placeholder="流程状态" clearable @change="handleFilter" style="width: 200px">
+        <el-select v-model="filterStatus" placeholder="流程状态" clearable @change="handleFilter">
           <el-option label="全部" value="" />
           <el-option label="审批中" value="RUNNING" />
           <el-option label="已通过" value="APPROVED" />
@@ -71,41 +71,20 @@
 </template>
 
 <script setup lang="ts">
-/**
- * 我的请求页面组件。
- * 
- * 功能说明：
- * 1. 展示当前用户发起的所有流程请求
- * 2. 支持按流程状态筛选
- * 3. 支持撤回正在审批中的请求
- * 4. 查看流程详情
- * 
- * 设计模式：Repository Pattern + 策略模式
- * - 数据访问通过 workflowService 封装
- * - 状态显示使用策略模式映射不同类型的样式
- */
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { getMyRequests, type WorkflowRequestItem } from '../../services/workflowService'
+import { getMyRequests, type WorkflowRequestItem } from '@/services/workflowService'
 
 const loading = ref(false)
 const requests = ref<WorkflowRequestItem[]>([])
 const filterStatus = ref('')
 
-/**
- * 计算属性：根据筛选条件过滤请求列表
- * 使用 computed 确保响应式更新
- */
 const filteredRequests = computed(() => {
   if (!filterStatus.value) return requests.value
   return requests.value.filter(req => req.processStatus === filterStatus.value)
 })
 
-/**
- * 获取流程状态对应的标签类型
- * 策略模式：不同状态映射不同的UI样式
- */
 const getStatusType = (status: string) => {
   const typeMap: Record<string, string> = {
     'RUNNING': 'warning',
@@ -116,10 +95,6 @@ const getStatusType = (status: string) => {
   return typeMap[status] || 'info'
 }
 
-/**
- * 获取流程状态对应的显示文本
- * 策略模式：不同状态映射不同的展示文案
- */
 const getStatusText = (status: string) => {
   const textMap: Record<string, string> = {
     'RUNNING': '审批中',
@@ -130,10 +105,6 @@ const getStatusText = (status: string) => {
   return textMap[status] || status
 }
 
-/**
- * 加载请求列表数据
- * 使用 try-catch-finally 确保 loading 状态正确重置
- */
 const loadData = async () => {
   loading.value = true
   try {
@@ -146,26 +117,14 @@ const loadData = async () => {
   }
 }
 
-/**
- * 刷新数据
- */
 const refreshData = () => {
   loadData()
 }
 
-/**
- * 筛选条件变化时的处理函数
- * 实际筛选逻辑在 computed 中处理，这里留作扩展点
- */
 const handleFilter = () => {
   // 筛选逻辑已在 computed 中处理
 }
 
-/**
- * 撤回流程请求
- * 使用 ElMessageBox 进行二次确认，防止误操作
- * TODO: 调用后端撤回接口
- */
 const handleRevoke = async (row: WorkflowRequestItem) => {
   try {
     await ElMessageBox.confirm('确认撤回该流程请求吗？', '提示', {
@@ -177,22 +136,15 @@ const handleRevoke = async (row: WorkflowRequestItem) => {
     ElMessage.success('撤回成功')
     loadData()
   } catch {
-    // 用户取消操作，无需处理
+    // 用户取消
   }
 }
 
-/**
- * 查看流程详情
- * TODO: 跳转到流程详情页，传递 processInstanceId 参数
- */
 const handleViewDetail = (row: WorkflowRequestItem) => {
+  // TODO: 跳转到流程详情页
   console.log('查看详情', row)
-  // TODO: router.push(`/workflow/detail/${row.processInstanceId}`)
 }
 
-/**
- * 组件挂载时加载数据
- */
 onMounted(() => {
   loadData()
 })
@@ -207,12 +159,6 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.card-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
 }
 
 .filter-section {

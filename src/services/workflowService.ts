@@ -2,6 +2,7 @@ import { http } from "./http";
 import type {
   WorkflowCompleteTaskRequest,
   WorkflowCompleteTaskResponse,
+  WorkflowMyRequestsResponse,
   WorkflowMyTasksResponse,
   WorkflowProcessDefinitionItem,
   WorkflowProcessDefinitionListResponse,
@@ -38,5 +39,19 @@ export const completeTask = async (
   payload: WorkflowCompleteTaskRequest
 ): Promise<WorkflowCompleteTaskResponse> => {
   const { data } = await http.post<WorkflowCompleteTaskResponse>(`/api/v1/workflows/tasks/${taskId}/complete`, payload);
+  return data;
+};
+
+/**
+ * 获取当前用户的流程请求列表。
+ * 用于在"我的请求"页面展示用户发起的所有流程实例。
+ * 
+ * 设计模式：Repository Pattern（仓储模式）
+ * 将数据访问逻辑封装在服务层，页面只关心业务逻辑。
+ * 
+ * @returns Promise<WorkflowMyRequestsResponse> 返回请求列表响应数据
+ */
+export const getMyRequests = async (): Promise<WorkflowMyRequestsResponse> => {
+  const { data } = await http.get<WorkflowMyRequestsResponse>("/api/v1/workflows/requests/my");
   return data;
 };

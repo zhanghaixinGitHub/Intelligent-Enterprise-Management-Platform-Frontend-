@@ -55,3 +55,19 @@ export interface WorkflowCompleteTaskResponse {
   processEnded: boolean;
   currentTaskNames: string[];
 }
+
+export interface WorkflowRequestItem {
+  processInstanceId: string;
+  processDefinitionKey: string;
+  processDefinitionName?: string;
+  businessKey?: string;
+  title?: string;
+  processStatus: string;
+  currentTaskNames?: string[];
+  startTime?: string;
+  canRevoke?: boolean;
+}
+
+export interface WorkflowMyRequestsResponse {
+  requests: WorkflowRequestItem[];
+}
