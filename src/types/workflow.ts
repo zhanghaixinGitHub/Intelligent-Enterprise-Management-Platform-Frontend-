@@ -13,10 +13,11 @@ export interface WorkflowProcessDefinitionListResponse {
 
 export interface WorkflowStartProcessRequest {
   processDefinitionKey: string;
-  managerAssignee: string;
-  hrAssignee: string;
+  managerAssignee?: string;
+  hrAssignee?: string;
   businessKey?: string;
-  title?: string;
+  leaveReason?: string;
+  leaveTime?: string | null;
   variables?: Record<string, unknown>;
 }
 

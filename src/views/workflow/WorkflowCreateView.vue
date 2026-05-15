@@ -94,17 +94,27 @@
         <el-form-item label="流程模板">
           <el-input :model-value="selectedDefinitionLabel" disabled />
         </el-form-item>
-        <el-form-item label="直属主管工号" prop="managerAssignee">
-          <el-input v-model="startForm.managerAssignee" placeholder="请输入直属主管工号，例如 manager01" />
+        <el-form-item label="直属主管">
+          <el-input v-model="startForm.managerAssignee" placeholder="自动获取当前用户的直属主管" disabled />
         </el-form-item>
-        <el-form-item label="HR 工号" prop="hrAssignee">
-          <el-input v-model="startForm.hrAssignee" placeholder="请输入 HR 工号，例如 hr01" />
+        <el-form-item label="HR 负责人">
+          <el-input v-model="startForm.hrAssignee" placeholder="自动获取 HR 负责人" disabled />
         </el-form-item>
         <el-form-item label="业务单号">
-          <el-input v-model="startForm.businessKey" placeholder="选填，例如 LEAVE-20260512-0008" />
+          <el-input v-model="startForm.businessKey" placeholder="提交后自动生成" disabled />
         </el-form-item>
-        <el-form-item label="流程标题">
-          <el-input v-model="startForm.title" placeholder="选填，例如 员工请假申请" />
+        <el-form-item label="请假原因" prop="leaveReason">
+          <el-input v-model="startForm.leaveReason" placeholder="请输入请假原因" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="请假时间" prop="leaveTime">
+          <el-date-picker
+            v-model="startForm.leaveTime"
+            type="datetime"
+            placeholder="选择请假时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            style="width: 100%"
+          />
         </el-form-item>
       </el-form>
 
@@ -147,12 +157,13 @@ const feedback = reactive<{ message: string; type: "success" | "error" | "warnin
   type: "success"
 });
 
-const startForm = reactive<Required<Pick<WorkflowStartProcessRequest, "processDefinitionKey" | "managerAssignee" | "hrAssignee">> & Pick<WorkflowStartProcessRequest, "businessKey" | "title">>({
+const startForm = reactive<{ processDefinitionKey: string; managerAssignee: string; hrAssignee: string; businessKey: string; leaveReason: string; leaveTime: string | null }>({
   processDefinitionKey: "",
   managerAssignee: "",
   hrAssignee: "",
   businessKey: "",
-  title: ""
+  leaveReason: "",
+  leaveTime: null
 });
 
 const lastStartedProcess = reactive<Partial<WorkflowStartProcessResponse>>({
@@ -182,9 +193,16 @@ const selectedDefinitionLabel = computed(() => {
   return `${selectedDefinition.value.name}（${selectedDefinition.value.key} / v${selectedDefinition.value.version}）`;
 });
 
+/**
+ * 表单校验规则
+ * 修改说明：
+ * 1. 移除了 managerAssignee 和 hrAssignee 的必填校验（后端自动获取）
+ * 2. 新增 leaveReason（请假原因）必填校验
+ * 3. 新增 leaveTime（请假时间）必填校验
+ */
 const startFormRules: FormRules = {
-  managerAssignee: [{ required: true, message: "请输入直属主管工号", trigger: "blur" }],
-  hrAssignee: [{ required: true, message: "请输入 HR 工号", trigger: "blur" }]
+  leaveReason: [{ required: true, message: "请输入请假原因", trigger: "blur" }],
+  leaveTime: [{ required: true, message: "请选择请假时间", trigger: "change" }]
 };
 
 const setFeedback = (message: string, type: "success" | "error" | "warning") => {
@@ -236,20 +254,55 @@ const loadProcessDefinitions = async () => {
   }
 };
 
+/**
+ * 打开发起流程对话框
+ * 修改说明：
+ * 1. 自动填充当前用户工号作为临时的主管工号
+ * 2. 自动填充默认 HR 工号
+ * 3. 后续应调用后端接口根据组织架构查询真实的直属主管和 HR
+ * @param definition 选中的流程定义
+ */
 const openStartDialog = (definition: WorkflowProcessDefinitionItem) => {
   selectedDefinition.value = definition;
   startForm.processDefinitionKey = definition.key;
+  
+  // 自动填充当前用户信息
+  if (authStore.user?.employeeId) {
+    // TODO: 后续调用后端接口获取当前用户的直属主管和HR
+    // 暂时使用占位值，实际应该调用获取用户组织架构的接口
+    startForm.managerAssignee = authStore.user.employeeId; // 临时使用当前用户工号
+    startForm.hrAssignee = "hr01"; // 临时默认值
+  }
+  
   dialogVisible.value = true;
 };
 
-const buildStartPayload = (): WorkflowStartProcessRequest => ({
-  processDefinitionKey: startForm.processDefinitionKey,
-  managerAssignee: startForm.managerAssignee.trim(),
-  hrAssignee: startForm.hrAssignee.trim(),
-  businessKey: startForm.businessKey.trim() || undefined,
-  title: startForm.title.trim() || undefined,
-  variables: {}
-});
+/**
+ * 构建发起流程请求载荷
+ * 修改说明：
+ * 1. 使用可选链操作符 ?. 防止 undefined 调用 trim() 报错
+ * 2. 使用新字段 leaveReason 和 leaveTime 替代旧的 title
+ * 3. managerAssignee 和 hrAssignee 为可选字段，如果为空则传 undefined，由后端使用默认值
+ * 4. leaveReason 和 leaveTime 为必填字段，直接传递（前端表单校验已保证有值）
+ */
+const buildStartPayload = (): WorkflowStartProcessRequest => {
+  const payload: WorkflowStartProcessRequest = {
+    processDefinitionKey: startForm.processDefinitionKey,
+    managerAssignee: startForm.managerAssignee?.trim() || undefined,
+    hrAssignee: startForm.hrAssignee?.trim() || undefined,
+    businessKey: startForm.businessKey || undefined,
+    leaveReason: startForm.leaveReason?.trim() || undefined,
+    // leaveTime 使用 ?? 运算符，确保 null 转为 undefined，但保留有效字符串
+    leaveTime: startForm.leaveTime ?? undefined,
+    variables: {}
+  };
+  
+  // 调试日志：打印请求载荷
+  console.log('发起流程请求载荷:', JSON.stringify(payload, null, 2));
+  console.log('原始 leaveTime 值:', startForm.leaveTime, '类型:', typeof startForm.leaveTime);
+  
+  return payload;
+};
 
 const handleStartProcess = async () => {
   if (!canStartProcess.value) {
