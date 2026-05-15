@@ -4,6 +4,7 @@ import vue from "@vitejs/plugin-vue";
 export default defineConfig({
   plugins: [vue()],
   server: {
+    port: 5173,  // 添加这行来指定端口
     /*
       为什么这样改：
       1. 浏览器当前页面源是 localhost:5173，而后端接口地址是 127.0.0.1:8002，主机名不同会被判定为跨域；

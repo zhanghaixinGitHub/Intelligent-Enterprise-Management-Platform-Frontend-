@@ -6,9 +6,11 @@
     3）检查前端环境变量
         根目录有 .env.development，内容应是：
         VITE_API_BASE_URL=http://127.0.0.1:8002
+        这配置的访问的后端的地址。
     4）启动前端（WebStorm 终端）
-        npm run dev -- --host 0.0.0.0 --port 5175
+        npm run dev -- --host 0.0.0.0 --port 5173
         如果 5175 被占用，Vite 会自动换端口，终端会打印实际地址。
+        这配置的是前端的地址和端口。
     5）访问前端
         通常是 http://localhost:5175/（以终端输出为准）
 
